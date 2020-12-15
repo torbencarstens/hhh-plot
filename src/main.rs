@@ -55,7 +55,7 @@ fn date_from_filename(filename: &str) -> Option<NaiveDateTime> {
     // Some(NaiveDate::from_isoywd(timestamp.year(), timestamp.iso_week().week(), timestamp.weekday()))
 }
 
-fn parse_file((fileos, _): (OsString, NaiveDateTime)) -> Option<(NaiveDateTime, Root)> {
+fn parse_file(fileos: OsString) -> Option<(NaiveDateTime, Root)> {
     let filepath = String::from(BASE_DIRECTORY) + fileos.to_str()?;
     let mut file = File::open(filepath.clone()).ok()?;
     let mut content = String::new();
@@ -151,7 +151,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         })
         .collect::<Vec<(OsString, NaiveDateTime)>>()
         .into_iter()
-        .filter_map(parse_file)
+        .filter_map(|(p, _)| parse_file(p))
         .collect::<Vec<(NaiveDateTime, Root)>>();
     result.sort_by_key(|(d, _)|
         NaiveDate::from_ymd(d.year(), d.month(), d.day()).and_hms(0, 0, 0));
