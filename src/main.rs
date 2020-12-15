@@ -145,16 +145,17 @@ fn convert(filename: &str, filename_output: &str) -> io::Result<Output> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut result = fs::read_dir(BASE_DIRECTORY)?
-        .filter_map(|file| {
-            let filename = file.ok()?.file_name();
-            Some((filename.clone(), date_from_filename(filename.to_str()?)?))
-        })
-        .collect::<Vec<(OsString, NaiveDateTime)>>()
+        .filter_map(|file|
+            Some(file.ok()?.file_name())
+        )
+        .collect::<Vec<OsString>>()
         .into_iter()
-        .filter_map(|(p, _)| parse_file(p))
+        .filter_map(parse_file)
         .collect::<Vec<(NaiveDateTime, Root)>>();
+
     result.sort_by_key(|(d, _)|
         NaiveDate::from_ymd(d.year(), d.month(), d.day()).and_hms(0, 0, 0));
+
     let xs = result.iter().map(|(date, _)|
         date.format(DATE_FORMAT).to_string()).collect::<Vec<String>>();
     let ys = result.iter().map(|(_, root)| root.chats.len() as f32).collect::<Vec<f32>>();
