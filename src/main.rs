@@ -43,7 +43,7 @@ struct Root {
 static DATE_FORMAT: &str = "%d.%m.%Y";
 static SVG_NAME: &str = "chart.svg";
 static OUTPUT_NAME: &str = "chart.png";
-static BASE_DIRECTORY: &str = "/home/chabare/state_backups";
+static BASE_DIRECTORY: &str = "/home/chabare/state_backups/";
 static CHART_TITLE: &str = "Number of chats";
 static PICTURE_SIZE: (usize, usize) = (1920, 1080);
 
