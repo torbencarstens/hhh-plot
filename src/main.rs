@@ -44,6 +44,7 @@ static DATE_FORMAT: &str = "%d.%m.%Y";
 static SVG_NAME: &str = "chart.svg";
 static OUTPUT_NAME: &str = "chart.png";
 static BASE_DIRECTORY: &str = "/home/chabare/state_backups";
+static PICTURE_SIZE: (usize, usize) = (1920, 1080);
 
 fn date_from_filename(filename: &str) -> Option<NaiveDateTime> {
     let name = filename.rsplit(".").last()?;
@@ -92,8 +93,8 @@ fn create_bar_chart(xseries: Vec<String>, yseries: Vec<f32>, filename: &str) -> 
     let yseries = yseries.into_iter().step_by(step_size).collect::<Vec<f32>>();
     let xseries = xseries.into_iter().step_by(step_size).collect::<Vec<String>>();
 
-    let width = 1920;
-    let height = 1080;
+    let width = PICTURE_SIZE.0 as isize;
+    let height = PICTURE_SIZE.1 as isize;
     let (top, right, bottom, left) = (90, 40, 50, 60);
 
     let x = ScaleBand::new()
@@ -131,7 +132,7 @@ fn create_bar_chart(xseries: Vec<String>, yseries: Vec<f32>, filename: &str) -> 
 fn convert(filename: &str, filename_output: &str) -> io::Result<Output> {
     Command::new("convert")
         .arg("-resize")
-        .arg("1920x1080")
+        .arg(&format!("{}x{}", PICTURE_SIZE.0, PICTURE_SIZE.1))
         .arg("-density")
         .arg("600")
         .arg("-background")
