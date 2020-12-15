@@ -44,6 +44,7 @@ static DATE_FORMAT: &str = "%d.%m.%Y";
 static SVG_NAME: &str = "chart.svg";
 static OUTPUT_NAME: &str = "chart.png";
 static BASE_DIRECTORY: &str = "/home/chabare/state_backups";
+static CHART_TITLE: &str = "Number of chats";
 static PICTURE_SIZE: (usize, usize) = (1920, 1080);
 
 fn date_from_filename(filename: &str) -> Option<NaiveDateTime> {
@@ -121,7 +122,7 @@ fn create_bar_chart(xseries: Vec<String>, yseries: Vec<f32>, filename: &str) -> 
         .set_width(width)
         .set_height(height)
         .set_margins(top, right, bottom, left)
-        .add_title(String::from("Number of chats"))
+        .add_title(String::from(CHART_TITLE))
         .add_view(&view)
         .add_axis_bottom(&x, Some((45, 12)))
         .add_axis_left(&y, None)
