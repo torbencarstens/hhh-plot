@@ -55,7 +55,7 @@ fn date_from_filename(filename: &str) -> Option<NaiveDateTime> {
 }
 
 fn parse_file((fileos, _): (OsString, NaiveDateTime)) -> Option<(NaiveDateTime, Root)> {
-    let filepath = String::from("/home/chabare/state_backups/") + fileos.to_str()?;
+    let filepath = String::from(BASE_DIRECTORY) + fileos.to_str()?;
     let mut file = File::open(filepath.clone()).ok()?;
     let mut content = String::new();
     file.read_to_string(&mut content).ok()?;
