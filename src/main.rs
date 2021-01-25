@@ -64,7 +64,7 @@ fn parse_file((fileos, time): (OsString, NaiveDateTime)) -> Option<(String, u32)
     Some((time.format(DATE_FORMAT).to_string(), root.chats.len() as u32))
 }
 
-fn create_bar_chart(data: Vec<(String, u32)>, filename: &str) -> Result<(), String> {
+fn create_bar_chart(data: Vec<(String, f32)>, filename: &str) -> Result<(), String> {
     let step_size = 1;
 
     let chat_lengths = data.iter().map(|(_, x)| *x as f32).step_by(step_size).collect::<Vec<f32>>();
@@ -130,9 +130,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .sorted_by_key(|(_, d)| *d)
         .filter_map(parse_file)
         .unique_by(|(x, _)| x.clone())
-        .fold(vec![], |mut a: Vec<(String, u32)>, x: (String, u32)| {
-            if a.last().unwrap_or(&("".to_string(), 0)).1 != x.1 {
-                a.push(x)
+        .fold(vec![], |mut a: Vec<(String, f32)>, x: (String, u32)| {
+            // don't have adjacent numbers (a[i] == a[i + 1]), useless for the graph
+            if a.last().unwrap_or(&("".to_string(), 0_f32)).1 != (x.1 as f32) {
+                a.push((x.0, x.1 as f32))
             }
 
             a
