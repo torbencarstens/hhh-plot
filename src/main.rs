@@ -67,7 +67,7 @@ fn parse_file((fileos, time): (OsString, NaiveDateTime)) -> Option<(String, u32)
 fn create_bar_chart(data: Vec<(String, f32)>, filename: &str) -> Result<(), String> {
     let step_size = 1;
 
-    let (dates, chat_lengths): (Vec<String>, Vec<f32>) = data.into_iter().step_by(step_size).unzip();
+    let (dates, chat_lengths): (Vec<String>, Vec<f32>) = data.clone().into_iter().step_by(step_size).unzip();
     let label_offset = (12, 45);
 
     let width = PICTURE_SIZE.0 as isize;
@@ -83,8 +83,6 @@ fn create_bar_chart(data: Vec<(String, f32)>, filename: &str) -> Result<(), Stri
     let chat_length_scale = ScaleLinear::new()
         .set_domain(vec![chat_lengths.first().unwrap() - 10_f32, chat_lengths.get(chat_lengths.len() - 1).unwrap() + 10_f32])
         .set_range(vec![height - top - bottom, 0]);
-
-    let data = dates.into_iter().zip(chat_lengths).collect();
 
     let view = LineSeriesView::new()
         .set_x_scale(&date_scale)
