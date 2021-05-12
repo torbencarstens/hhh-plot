@@ -30,6 +30,7 @@ struct Chat {
     id: i64,
     pinned_message_id: Option<i64>,
     users: Vec<User>,
+    title: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -61,7 +62,8 @@ fn parse_file((fileos, time): (OsString, NaiveDateTime)) -> Option<(String, u32)
     let file = File::open(filepath.clone()).ok()?;
     let root: Root = serde_json::from_reader(file).ok()?;
 
-    Some((time.format(DATE_FORMAT).to_string(), root.chats.len() as u32))
+    let chats = root.chats.iter().filter(|c| c.title.is_some());
+    Some((time.format(DATE_FORMAT).to_string(), chats.count() as u32))
 }
 
 fn create_bar_chart(data: Vec<(String, f32)>, filename: &str) -> Result<(), String> {
