@@ -14,7 +14,7 @@ use std::io;
 use std::process::{Command, Output};
 use std::str;
 
-use charts::{Chart, Color, LineSeriesView, MarkerType, PointLabelPosition, ScaleBand, ScaleLinear};
+use charts::{Chart, Color, Grid, LineSeriesView, MarkerType, PointLabelPosition, ScaleBand, ScaleLinear};
 use chrono::{Datelike, NaiveDate, NaiveDateTime};
 use itertools::Itertools;
 
@@ -92,12 +92,15 @@ fn create_bar_chart(data: Vec<(String, f32)>, filename: &str) -> Result<(), Stri
         .set_colors(Color::color_scheme_light())
         .load_data(&data).unwrap();
 
+    let grid = Grid::new(0 as f32, 0 as f32, right as f32, top as f32, 47 as f32, 65 as f32);
+
     Chart::new()
         .set_width(width)
         .set_height(height)
         .set_margins(top, right, bottom, left)
         .add_title(String::from(CHART_TITLE))
         .add_view(&view)
+        .add_grid(grid)
         .add_axis_bottom(&date_scale, Some(label_offset))
         .add_axis_left(&chat_length_scale, None)
         .set_bottom_axis_tick_label_rotation(90)
