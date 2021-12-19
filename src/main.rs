@@ -13,6 +13,7 @@ use std::fs::{self, File};
 use std::io;
 use std::process::{Command, Output};
 use std::str;
+use std::time::Instant;
 
 use charts::{Chart, Color, Grid, LineSeriesView, MarkerType, PointLabelPosition, ScaleBand, ScaleLinear};
 use chrono::{Datelike, NaiveDate, NaiveDateTime};
@@ -54,7 +55,9 @@ fn date_from_filename(filename: &str) -> Option<NaiveDateTime> {
     let name = filename.rsplit(".").last()?;
 
     let date = NaiveDateTime::from_timestamp(name.parse::<i64>().ok()?, 0);
-    Some(NaiveDate::from_ymd(date.year(), date.month(), date.day()).and_hms(0, 0, 0))
+    let result = Some(NaiveDate::from_ymd(date.year(), date.month(), date.day()).and_hms(0, 0, 0));
+
+    result
 }
 
 fn parse_file((fileos, time): (OsString, NaiveDateTime)) -> Option<(String, u32)> {
@@ -63,27 +66,37 @@ fn parse_file((fileos, time): (OsString, NaiveDateTime)) -> Option<(String, u32)
     let root: Root = serde_json::from_reader(file).ok()?;
 
     let chats = root.chats.iter().filter(|c| c.title.is_some());
-    Some((time.format(DATE_FORMAT).to_string(), chats.count() as u32))
+    let result = Some((time.format(DATE_FORMAT).to_string(), chats.count() as u32));
+
+    result
 }
 
 fn create_bar_chart(data: Vec<(String, f32)>, filename: &str) -> Result<(), String> {
     let step_size = 1;
+    let chat_length_domain_offset = 10_f32;
+    let inner_padding = 0.1;
+    let outer_padding = 0.1;
+    let x_tick_spacing = 47_f32;
+    let y_tick_spacing = 65_f32;
+    let axis_tick_label_rotation = 90;
+    let label_offset = (12, 45);
+    let (top, right, bottom, left) = (90, 40, 50 + (label_offset.1 as isize), 60);
 
     let (dates, chat_lengths): (Vec<String>, Vec<f32>) = data.clone().into_iter().step_by(step_size).unzip();
-    let label_offset = (12, 45);
 
     let width = PICTURE_SIZE.0 as isize;
     let height = PICTURE_SIZE.1 as isize;
-    let (top, right, bottom, left) = (90, 40, 50 + (label_offset.1 as isize), 60);
 
     let date_scale = ScaleBand::new()
         .set_domain(dates.clone())
         .set_range(vec![0, width - left - right])
-        .set_inner_padding(0.1)
-        .set_outer_padding(0.1);
+        .set_inner_padding(inner_padding)
+        .set_outer_padding(outer_padding);
 
+    let chat_length_scale_start = chat_lengths.first().unwrap() - chat_length_domain_offset;
+    let chat_length_scale_end = chat_lengths.get(chat_lengths.len() - 1).unwrap() + chat_length_domain_offset;
     let chat_length_scale = ScaleLinear::new()
-        .set_domain(vec![chat_lengths.first().unwrap() - 10_f32, chat_lengths.get(chat_lengths.len() - 1).unwrap() + 10_f32])
+        .set_domain(vec![chat_length_scale_start, chat_length_scale_end])
         .set_range(vec![height - top - bottom, 0]);
 
     let view = LineSeriesView::new()
@@ -94,7 +107,7 @@ fn create_bar_chart(data: Vec<(String, f32)>, filename: &str) -> Result<(), Stri
         .set_colors(Color::color_scheme_light())
         .load_data(&data).unwrap();
 
-    let grid = Grid::new(0 as f32, 0 as f32, right as f32, top as f32, 47 as f32, 65 as f32);
+    let grid = Grid::new(0 as f32, 0 as f32, right as f32, top as f32, x_tick_spacing, y_tick_spacing);
 
     Chart::new()
         .set_width(width)
@@ -105,7 +118,7 @@ fn create_bar_chart(data: Vec<(String, f32)>, filename: &str) -> Result<(), Stri
         .add_grid(grid)
         .add_axis_bottom(&date_scale, Some(label_offset))
         .add_axis_left(&chat_length_scale, None)
-        .set_bottom_axis_tick_label_rotation(90)
+        .set_bottom_axis_tick_label_rotation(axis_tick_label_rotation)
         .save(filename)
 }
 
@@ -123,6 +136,7 @@ fn convert(filename: &str, filename_output: &str) -> io::Result<Output> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let start = Instant::now();
     let result = fs::read_dir(BASE_DIRECTORY)?
         .filter_map(|file|
             Some(file.ok()?.file_name())
@@ -141,8 +155,16 @@ fn main() -> Result<(), Box<dyn Error>> {
             a
         });
 
+    // parse_file needs ~10ms
+    println!("parsing + filtering = {}s", start.elapsed().as_secs());
+    let start = Instant::now();
+
     create_bar_chart(result, SVG_NAME)?;
+    println!("create bar chart = {}ms", start.elapsed().as_millis());
+    let start = Instant::now();
+
     let result = convert(SVG_NAME, OUTPUT_NAME)?;
+    println!("convert svg -> png = {}s", start.elapsed().as_secs());
     if result.stderr.len() > 0 || result.stdout.len() > 0 {
         println!("{} | {}", str::from_utf8(&result.stdout)?, str::from_utf8(&result.stderr)?);
     }
